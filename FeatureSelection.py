@@ -10,3 +10,14 @@ def main():
     if algo_number<=0 or algo_number>2:
         print("Defaulting to Forward Selection, as o")
         algo_number=1
+    file = open(file_name, 'r')
+    first_line = file.readline()
+    columns = first_line.split()
+    num_records = sum(1 for _ in file)
+    
+    num_features = len(columns) - 1
+    file.close()
+    print(f'This dataset has {num_features} features(not including class attribute), with {num_records+1} instances')
+
+if __name__=="__main__":
+    main()  
