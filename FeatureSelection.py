@@ -10,13 +10,9 @@ def manhattan_distance(p1, p2):
     distance = sum([abs(a - b) for a, b in zip(p1, p2)])
     return distance
 
-def nearest_neighbors(data, current_feature_set, feature_to_add=None, best_correct_predictions=0):
+def nearest_neighbors(data, current_feature_set, best_correct_predictions=0):
     classes = data[0]
-
-    if feature_to_add:
-        instances = [[row[col-1] for col in current_feature_set + [feature_to_add]] for row in data[1]]
-    else:
-        instances = [[row[col-1] for col in current_feature_set] for row in data[1]]
+    instances = [[row[col-1] for col in current_feature_set] for row in data[1]]
 
     correct_predictions = 0
     incorrect_predictions = 0
@@ -43,7 +39,7 @@ def nearest_neighbors(data, current_feature_set, feature_to_add=None, best_corre
             incorrect_predictions += 1
         
         if len(instances) - incorrect_predictions < best_correct_predictions:
-            return ("More incorrect", 0)
+            return (-1, 0)
 
     accuracy = round((correct_predictions / len(instances)), 3)
 
@@ -56,20 +52,18 @@ def feature_seaarch(data, num_features):
     print(f'Beginning search.')
 
     for i in range(1, num_features + 1):
-        # print(f'On the {i+1}th level of the search tree.')
         feature_to_add_at_this_level = None
         best_accuracy_so_far = 0.0
         best_correct_predictions = 0
 
         for k in range(1, num_features + 1):
             if k not in current_set_of_features:
-                # print(f'Considering adding {k}th feature')
-                accuracy, correct_predictions = nearest_neighbors(data, current_set_of_features, k, best_correct_predictions)
-                if accuracy == "More incorrect":
-                    print(f'Using feature(s) {{{current_set_of_features + [k]}}} accuracy < {best_accuracy_so_far}%')
+                accuracy, correct_predictions = nearest_neighbors(data, current_set_of_features + [k], best_correct_predictions)
+                if accuracy == -1:
+                    print(f'Using feature(s) {{{current_set_of_features + [k]}}} accuracy < {best_accuracy_so_far*100}%')
                     continue
 
-                print(f'Using feature(s) {{{current_set_of_features + [k]}}} accuracy is {accuracy}%')
+                print(f'Using feature(s) {{{current_set_of_features + [k]}}} accuracy is {accuracy*100}%')
                 
                 if accuracy > best_accuracy_so_far:
                     best_accuracy_so_far = accuracy
@@ -86,9 +80,9 @@ def feature_seaarch(data, num_features):
             best_set_of_features = current_set_of_features[:]
         else:
             print(f'(Warning, Accuracy has decreased! Continuing search in case of local maxima)')
-        print(f'Feature set {current_set_of_features} was best, accuracy is {best_accuracy_so_far}%')
+        print(f'Feature set {current_set_of_features} was best, accuracy is {best_accuracy_so_far*100}%')
 
-    print(f'Finished search!! The best feature subset is {best_set_of_features}, which has an accuracy of {total_best_accuracy}%')
+    print(f'Finished search!! The best feature subset is {best_set_of_features}, which has an accuracy of {total_best_accuracy*100}%')
 
     return best_set_of_features, total_best_accuracy
 
