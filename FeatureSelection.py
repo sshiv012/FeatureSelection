@@ -10,8 +10,7 @@ def manhattan_distance(p1, p2):
     distance = sum([abs(a - b) for a, b in zip(p1, p2)])
     return distance
 
-def nearest_neighbors(data, current_feature_set, feature_to_add=None):
-    # classes = [int(float(row[0])) for row in data]
+def nearest_neighbors(data, current_feature_set, feature_to_add=None, best_correct_predictions=0):
     classes = data[0]
 
     if feature_to_add:
@@ -19,9 +18,8 @@ def nearest_neighbors(data, current_feature_set, feature_to_add=None):
     else:
         instances = [[row[col-1] for col in current_feature_set] for row in data[1]]
 
-    # print(len(instances))
-    # predictions = []
     correct_predictions = 0
+    incorrect_predictions = 0
 
     for i in range(len(instances)):
         test_feature = instances[i]
@@ -29,8 +27,6 @@ def nearest_neighbors(data, current_feature_set, feature_to_add=None):
         
         distances = []
         labels = []
-        # nn_dist = float('inf')
-        # nn_location = float('inf')
 
         for j in range(len(instances)):
             if i != j:
@@ -38,24 +34,20 @@ def nearest_neighbors(data, current_feature_set, feature_to_add=None):
                 #distance = manhattan_distance(features[j], test_feature)
                 distances.append(distance)
                 labels.append(classes[j])
-                # if distance < nn_dist:
-                #     nn_dist = distance
-                #     # nn_location = j
-                #     nn_label = classes[j]
-        
-        # if test_class == nn_label:
-        #     correct_predictions += 1
 
         min_distance_index = distances.index(min(distances))
         predicted_label = labels[min_distance_index]
         if test_class == predicted_label:
             correct_predictions += 1
-        # predictions.append(predicted_label)
-    
-    # correct_predictions = sum([1 for true, pred in zip(classes, predictions) if true == pred])
+        else:
+            incorrect_predictions += 1
+        
+        if len(instances) - incorrect_predictions < best_correct_predictions:
+            return ("More incorrect", 0)
+
     accuracy = round((correct_predictions / len(instances)), 3)
 
-    return accuracy
+    return (accuracy, correct_predictions)
 
 def feature_seaarch(data, num_features):
     current_set_of_features = [] # empty set
@@ -67,16 +59,24 @@ def feature_seaarch(data, num_features):
         # print(f'On the {i+1}th level of the search tree.')
         feature_to_add_at_this_level = None
         best_accuracy_so_far = 0.0
+        best_correct_predictions = 0
 
         for k in range(1, num_features + 1):
             if k not in current_set_of_features:
                 # print(f'Considering adding {k}th feature')
-                accuracy = nearest_neighbors(data, current_set_of_features, k)
-                print(f'Using feature(s) {{{current_set_of_features + [k]}}} accuracy is {accuracy}%')
+                accuracy, correct_predictions = nearest_neighbors(data, current_set_of_features, k, best_correct_predictions)
+                if accuracy == "More incorrect":
+                    print(f'Using feature(s) {{{current_set_of_features + [k]}}} accuracy < {best_accuracy_so_far}%')
+                    continue
 
+                print(f'Using feature(s) {{{current_set_of_features + [k]}}} accuracy is {accuracy}%')
+                
                 if accuracy > best_accuracy_so_far:
                     best_accuracy_so_far = accuracy
                     feature_to_add_at_this_level = k
+                    if correct_predictions > best_correct_predictions:
+                        best_correct_predictions = correct_predictions
+
 
         current_set_of_features.append(feature_to_add_at_this_level)
 
@@ -96,7 +96,7 @@ def main():
     print("Welcome to Suryaa/Bhavya's Feature Selection program.")
     print("Type in the name of the file to test : ")
     # file_name = input()
-    file_name = 'CS170_small_Data__33.txt'
+    file_name = 'CS170_large_Data__21.txt'
     print("Type the number of the algorithm you want to run")
     print("1) Forward Selection")
     print("2) Backward Elimination")
@@ -125,7 +125,7 @@ def main():
     
     data = [classes, instances]
 
-    accuracy = nearest_neighbors(data, [i for i in range(1, num_features + 1)])
+    accuracy, _ = nearest_neighbors(data, [i for i in range(1, num_features + 1)])
     print(f'Running nearest neighbor with all {num_features} features, using \"leaving-one-out\" evaluation, we get an accuracy of {accuracy*100}%')
 
     final_feature_set = feature_seaarch(data, num_features)
@@ -133,8 +133,6 @@ def main():
 
 #0/1 Normalization
 def normalize(data):
-    # with open(input_file, 'r') as file:
-    #     lines = file.readlines()
     print(f'lengh of data: {len(data)}')
     normalized_data = []
 
