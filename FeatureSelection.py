@@ -89,47 +89,55 @@ def feature_seaarch(data, num_features):
 def backward_elimination(data, num_features):
      current_feature_set = set(i for i in range(1, num_features + 1)) #Entire set of features
      best_feature_set = current_feature_set.copy() #Initialization
-     best_accuracy = 0.0
+     total_best_accuracy = 0.0
+     
      print(f'Beginning search using Backward Elimination')
      for i in range(num_features, 0, -1):
         print(f'On the {i}th level of the search tree.')
         feature_to_remove_at_this_level = None
         best_accuracy_so_far = 0.0
+        best_correct_predictions = 0
+
         for k in current_feature_set:
             print(f'Considering removing the {k}th feature')
             feature_subset = current_feature_set-{k}
-            accuracy = nearest_neighbors(data, feature_subset)
-            print(f'Using feature(s) {{{", ".join(str(f) for f in feature_subset)}}} accuracy is {accuracy * 100}%')
+            accuracy, correct_predictions = nearest_neighbors(data, feature_subset, best_correct_predictions)
+            if accuracy == -1:
+                    print(f'Using feature(s) {{{", ".join(str(f) for f in feature_subset)}}} accuracy < {best_accuracy_so_far*100}%')
+                    continue
+            print(f'Using feature(s) {{{", ".join(str(f) for f in feature_subset)}}} accuracy is {accuracy*100}%')
 
             if accuracy > best_accuracy_so_far:
-                best_accuracy_so_far = accuracy
-                feature_to_remove_at_this_level = k
+                    best_accuracy_so_far = accuracy
+                    feature_to_remove_at_this_level = k
+                    if correct_predictions > best_correct_predictions:
+                        best_correct_predictions = correct_predictions    
+
         current_feature_set.remove(feature_to_remove_at_this_level)
-        if best_accuracy_so_far > best_accuracy:
-            best_accuracy = best_accuracy_so_far
+        
+        if best_accuracy_so_far > total_best_accuracy:
+            total_best_accuracy = best_accuracy_so_far
             best_feature_set = current_feature_set.copy()
             print('(Accuracy has increased, we have escaped a local maxima!)')
         else:
             print('(No improvement this path)')
         print(f'Feature set {{{", ".join(str(f) for f in current_feature_set)}}} was best, accuracy is {best_accuracy_so_far * 100}%')
-        print(f'Finished search!! The best feature subset is {{{", ".join(str(f) for f in best_feature_set)}}}, which has an accuracy of {best_accuracy * 100}%')
 
-
-     print(f'Finished search!! The best feature subset is {{{", ".join(str(f) for f in best_feature_set)}}}, which has an accuracy of {best_accuracy * 100}%')
-     return best_feature_set, best_accuracy
+     print(f'Finished search!! The best feature subset is {{{", ".join(str(f) for f in best_feature_set)}}}, which has an accuracy of {total_best_accuracy * 100}%')
+     return best_feature_set, total_best_accuracy
     
 def main():
     print("Welcome to Suryaa/Bhavya's Feature Selection program.")
     print("Type in the name of the file to test : ")
     # file_name = input()
-    file_name = 'CS170_large_Data__21.txt'
+    file_name = 'CS170_small_Data__19.txt'
     print("Type the number of the algorithm you want to run")
     print("1) Forward Selection")
     print("2) Backward Elimination")
-    # algo_number = int(input())
-    # if algo_number<=0 or algo_number>2:
-    #     print("Defaulting to Forward Selection, as o")
-    #     algo_number=1
+    algo_number = int(input())
+    if algo_number<=0 or algo_number>2:
+         print("Defaulting to Forward Selection, as you have entered an invalid number")
+         algo_number=1
     with open(file_name, 'r') as file:
         data = file.readlines()
         # first_line = data[0] # 1st line to count total features
@@ -154,7 +162,10 @@ def main():
     accuracy, _ = nearest_neighbors(data, [i for i in range(1, num_features + 1)])
     print(f'Running nearest neighbor with all {num_features} features, using \"leaving-one-out\" evaluation, we get an accuracy of {accuracy*100}%')
 
-    final_feature_set = feature_seaarch(data, num_features)
+    if algo_number == 1:
+        final_feature_set = feature_seaarch(data, num_features)
+    else:
+        final_feature_set = backward_elimination(data, num_features)
     print(f'final features: {final_feature_set}')
 
 #0/1 Normalization
