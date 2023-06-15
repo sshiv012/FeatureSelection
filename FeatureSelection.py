@@ -92,6 +92,38 @@ def feature_seaarch(data, num_features):
 
     return best_set_of_features, total_best_accuracy
 
+def backward_elimination(data, num_features):
+     current_feature_set = set(i for i in range(1, num_features + 1)) #Entire set of features
+     best_feature_set = current_feature_set.copy() #Initialization
+     best_accuracy = 0.0
+     print(f'Beginning search using Backward Elimination')
+     for i in range(num_features, 0, -1):
+        print(f'On the {i}th level of the search tree.')
+        feature_to_remove_at_this_level = None
+        best_accuracy_so_far = 0.0
+        for k in current_feature_set:
+            print(f'Considering removing the {k}th feature')
+            feature_subset = current_feature_set-{k}
+            accuracy = nearest_neighbors(data, feature_subset)
+            print(f'Using feature(s) {{{", ".join(str(f) for f in feature_subset)}}} accuracy is {accuracy * 100}%')
+
+            if accuracy > best_accuracy_so_far:
+                best_accuracy_so_far = accuracy
+                feature_to_remove_at_this_level = k
+        current_feature_set.remove(feature_to_remove_at_this_level)
+        if best_accuracy_so_far > best_accuracy:
+            best_accuracy = best_accuracy_so_far
+            best_feature_set = current_feature_set.copy()
+            print('(Accuracy has increased, we have escaped a local maxima!)')
+        else:
+            print('(No improvement this path)')
+        print(f'Feature set {{{", ".join(str(f) for f in current_feature_set)}}} was best, accuracy is {best_accuracy_so_far * 100}%')
+        print(f'Finished search!! The best feature subset is {{{", ".join(str(f) for f in best_feature_set)}}}, which has an accuracy of {best_accuracy * 100}%')
+
+
+     print(f'Finished search!! The best feature subset is {{{", ".join(str(f) for f in best_feature_set)}}}, which has an accuracy of {best_accuracy * 100}%')
+     return best_feature_set, best_accuracy
+    
 def main():
     print("Welcome to Suryaa/Bhavya's Feature Selection program.")
     print("Type in the name of the file to test : ")
