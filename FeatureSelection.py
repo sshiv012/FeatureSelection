@@ -1,4 +1,5 @@
 import math
+import csv
 
 # Find Euclidean Distance between two points
 def euclidean_distance(p1, p2):
@@ -6,6 +7,7 @@ def euclidean_distance(p1, p2):
     return distance
 
 # Find Manhattan Distance between two points
+# Not used in this program, only for evaluation
 def manhattan_distance(p1, p2):
     distance = sum([abs(a - b) for a, b in zip(p1, p2)])
     return distance
@@ -128,9 +130,9 @@ def backward_elimination(data, num_features):
     
 def main():
     print("Welcome to Suryaa/Bhavya's Feature Selection program.")
-    print("Type in the name of the file to test : ")
-    # file_name = input()
-    file_name = 'CS170_small_Data__19.txt'
+    print("Type in the name of the file to test, type default to run on Wisconsin Breast Cancer Dataset : ")
+    file_name = input()
+
     print("Type the number of the algorithm you want to run")
     print("1) Forward Selection")
     print("2) Backward Elimination")
@@ -138,11 +140,22 @@ def main():
     if algo_number<=0 or algo_number>2:
          print("Defaulting to Forward Selection, as you have entered an invalid number")
          algo_number=1
-    with open(file_name, 'r') as file:
-        data = file.readlines()
-        # first_line = data[0] # 1st line to count total features
-        num_features = len(data[0].split()) - 1 # exclude 1st column (classes)
-        num_records = len(data) # count from 2nd line
+    if file_name == "default":
+        file_name = "data.csv"
+        data = []
+        with open(file_name, 'r') as file:
+            reader = csv.DictReader(file)
+            num_features = len(reader.fieldnames) - 2  # exclude 'id' and 'diagnosis' columns
+            num_records = 0
+            for row in reader:
+                data.append(row)
+                num_records += 1
+    else:
+        with open(file_name, 'r') as file:
+            data = file.readlines()
+            # first_line = data[0] # 1st line to count total features
+            num_features = len(data[0].split()) - 1 # exclude 1st column (classes)
+            num_records = len(data) # count from 2nd line
 
     print(num_records)
     print(num_features)
@@ -152,10 +165,22 @@ def main():
     classes = []
     instances = []
 
-    for line in data:
-        row = line.strip().split()
-        classes.append(float(row[0]))
-        instances.append([float(i) for i in row[1:]])
+    if file_name == "data.csv":
+        for row in data:
+            classes.append(float(1) if row['diagnosis'] == 'M' else float(2))
+            instance = []
+            for feature in reader.fieldnames[2:]:
+                value = row[feature]
+                if value is None:
+                    print(feature)
+                    print(row)
+                instance.append(float(value) if value is not None else None)
+            instances.append(instance)
+    else:
+        for line in data:
+            row = line.strip().split()
+            classes.append(float(row[0]))
+            instances.append([float(i) for i in row[1:]])
     
     data = [classes, instances]
 
