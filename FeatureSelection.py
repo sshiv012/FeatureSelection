@@ -1,5 +1,7 @@
 import math
 import csv
+import time
+import random
 
 # Find Euclidean Distance between two points
 def euclidean_distance(p1, p2):
@@ -13,8 +15,8 @@ def manhattan_distance(p1, p2):
     return distance
 
 def nearest_neighbors(data, current_feature_set, best_correct_predictions=0):
-    classes = data[0]
-    instances = [[row[col-1] for col in current_feature_set] for row in data[1]]
+    classes = [row[0] for row in data]
+    instances = [[row[1][col-1] for col in current_feature_set] for row in data]
 
     correct_predictions = 0
     incorrect_predictions = 0
@@ -47,11 +49,11 @@ def nearest_neighbors(data, current_feature_set, best_correct_predictions=0):
 
     return (accuracy, correct_predictions)
 
-def feature_seaarch(data, num_features):
+def forward_search(data, num_features):
     current_set_of_features = [] # empty set
     best_set_of_features = [] # empty set
     total_best_accuracy = 0.0
-    print(f'Beginning search.')
+    print(f'Beginning forward search.')
 
     for i in range(1, num_features + 1):
         feature_to_add_at_this_level = None
@@ -110,10 +112,10 @@ def backward_elimination(data, num_features):
             print(f'Using feature(s) {{{", ".join(str(f) for f in feature_subset)}}} accuracy is {accuracy*100}%')
 
             if accuracy > best_accuracy_so_far:
-                    best_accuracy_so_far = accuracy
-                    feature_to_remove_at_this_level = k
-                    if correct_predictions > best_correct_predictions:
-                        best_correct_predictions = correct_predictions    
+                best_accuracy_so_far = accuracy
+                feature_to_remove_at_this_level = k
+                if correct_predictions > best_correct_predictions:
+                    best_correct_predictions = correct_predictions
 
         current_feature_set.remove(feature_to_remove_at_this_level)
         
@@ -182,16 +184,21 @@ def main():
             classes.append(float(row[0]))
             instances.append([float(i) for i in row[1:]])
     
-    data = [classes, instances]
+    # data = [classes, instances]
 
     accuracy, _ = nearest_neighbors(data, [i for i in range(1, num_features + 1)])
     print(f'Running nearest neighbor with all {num_features} features, using \"leaving-one-out\" evaluation, we get an accuracy of {accuracy*100}%')
 
+    start_time = time.time()
     if algo_number == 1:
-        final_feature_set = feature_seaarch(data, num_features)
+        final_feature_set = forward_search(data, num_features)
+        end_time = time.time() - start_time
+        print(f'Finished forward search in {end_time} seconds.')
     else:
         final_feature_set = backward_elimination(data, num_features)
-    print(f'final features: {final_feature_set}')
+        end_time = time.time() - start_time
+        print(f'Finished backward elimination search in {end_time} seconds.')
+    print(f'Final feature subset: {final_feature_set}')
 
 #0/1 Normalization
 def normalize(data):
