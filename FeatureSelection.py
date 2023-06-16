@@ -154,22 +154,20 @@ def main():
                 num_records += 1
     else:
         with open(file_name, 'r') as file:
-            data = file.readlines()
-            # first_line = data[0] # 1st line to count total features
-            num_features = len(data[0].split()) - 1 # exclude 1st column (classes)
-            num_records = len(data) # count from 2nd line
+            file_data = file.readlines()
+            num_features = len(file_data[0].split()) - 1 # exclude 1st column (classes)
+            num_records = len(file_data) # count from 2nd line
 
     print(num_records)
     print(num_features)
     print(f'This dataset has {num_features} features(not including class attribute), with {num_records} instances')
 
     # normalized_data = normalize(data)
-    classes = []
-    instances = []
+    data = []
 
     if file_name == "data.csv":
         for row in data:
-            classes.append(float(1) if row['diagnosis'] == 'M' else float(2))
+            # classes.append(float(1) if row['diagnosis'] == 'M' else float(2))
             instance = []
             for feature in reader.fieldnames[2:]:
                 value = row[feature]
@@ -177,14 +175,20 @@ def main():
                     print(feature)
                     print(row)
                 instance.append(float(value) if value is not None else None)
-            instances.append(instance)
+            # instances.append(instance)
+            data.append([float(1) if row['diagnosis'] == 'M' else float(2), instance])
     else:
         for line in data:
             row = line.strip().split()
-            classes.append(float(row[0]))
-            instances.append([float(i) for i in row[1:]])
+            data.append([float(row[0]), [float(i) for i in row[1:]]])
+            # classes.append(float(row[0]))
+            # instances.append([float(i) for i in row[1:]])
     
     # data = [classes, instances]
+    if len(data) > 10000:
+        sample_size = len(data) // 2
+        random.shuffle(data)
+        data = data[:sample_size]
 
     accuracy, _ = nearest_neighbors(data, [i for i in range(1, num_features + 1)])
     print(f'Running nearest neighbor with all {num_features} features, using \"leaving-one-out\" evaluation, we get an accuracy of {accuracy*100}%')
