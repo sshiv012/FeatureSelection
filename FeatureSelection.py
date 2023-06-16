@@ -49,7 +49,7 @@ def nearest_neighbors(data, current_feature_set, best_correct_predictions=0):
 
     return (accuracy, correct_predictions)
 
-def forward_search(data, num_features):
+def forward_search(data, num_features, early_stop=False):
     current_set_of_features = [] # empty set
     best_set_of_features = [] # empty set
     total_best_accuracy = 0.0
@@ -82,9 +82,15 @@ def forward_search(data, num_features):
             print('here')
             total_best_accuracy = best_accuracy_so_far
             best_set_of_features = current_set_of_features[:]
+            consecutive_decreases = 0
         else:
             print(f'(Warning, Accuracy has decreased! Continuing search in case of local maxima)')
+            consecutive_decreases += 1
         print(f'Feature set {current_set_of_features} was best, accuracy is {best_accuracy_so_far*100}%')
+
+        if early_stop and consecutive_decreases >= 3:
+            print(f'Accuracy has decreased for five consecutive steps. Stopping early.')
+            break
 
     print(f'Finished search!! The best feature subset is {best_set_of_features}, which has an accuracy of {total_best_accuracy*100}%')
 
@@ -144,13 +150,13 @@ def main():
          algo_number=1
     if file_name == "default":
         file_name = "data.csv"
-        data = []
+        csv_data = []
         with open(file_name, 'r') as file:
             reader = csv.DictReader(file)
             num_features = len(reader.fieldnames) - 2  # exclude 'id' and 'diagnosis' columns
             num_records = 0
             for row in reader:
-                data.append(row)
+                csv_data.append(row)
                 num_records += 1
     else:
         with open(file_name, 'r') as file:
@@ -166,7 +172,7 @@ def main():
     data = []
 
     if file_name == "data.csv":
-        for row in data:
+        for row in csv_data:
             # classes.append(float(1) if row['diagnosis'] == 'M' else float(2))
             instance = []
             for feature in reader.fieldnames[2:]:
@@ -178,7 +184,7 @@ def main():
             # instances.append(instance)
             data.append([float(1) if row['diagnosis'] == 'M' else float(2), instance])
     else:
-        for line in data:
+        for line in file_data:
             row = line.strip().split()
             data.append([float(row[0]), [float(i) for i in row[1:]]])
             # classes.append(float(row[0]))
@@ -189,13 +195,18 @@ def main():
         sample_size = len(data) // 2
         random.shuffle(data)
         data = data[:sample_size]
-
+    print(len(data))
     accuracy, _ = nearest_neighbors(data, [i for i in range(1, num_features + 1)])
     print(f'Running nearest neighbor with all {num_features} features, using \"leaving-one-out\" evaluation, we get an accuracy of {accuracy*100}%')
 
     start_time = time.time()
     if algo_number == 1:
-        final_feature_set = forward_search(data, num_features)
+        print("Do you want to stop early if there are consecutive decreases in accuracy (OPTIMIZATION)? (y/n)")
+        stop_early = input()
+        if stop_early == 'y':
+            final_feature_set = forward_search(data, num_features, True)
+        else:
+            final_feature_set = forward_search(data, num_features)
         end_time = time.time() - start_time
         print(f'Finished forward search in {end_time} seconds.')
     else:
