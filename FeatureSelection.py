@@ -4,15 +4,18 @@ import time
 import random
 
 def euclidean_distance(p1, p2):
+    # Calculates the Euclidean distance between two points
     distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(p1, p2)))
     return distance
 
 # not used in this program, only for evaluation
 def manhattan_distance(p1, p2):
+    # Calculates the Manhattan distance between two points
     distance = sum([abs(a - b) for a, b in zip(p1, p2)])
     return distance
 
 def nearest_neighbors(data, current_feature_set, best_correct_predictions=0):
+    # Performs nearest neighbor classification on the given dataset using the current feature set
     classes = [row[0] for row in data]
     instances = [[row[1][col-1] for col in current_feature_set] for row in data]
 
@@ -48,6 +51,7 @@ def nearest_neighbors(data, current_feature_set, best_correct_predictions=0):
     return (accuracy, correct_predictions)
 
 def forward_search(data, num_features, early_stop=False):
+    # Perform the forward search feature selection algorithm
     current_set_of_features = [] # empty set
     best_set_of_features = [] # empty set
     total_best_accuracy = 0.0
@@ -91,6 +95,7 @@ def forward_search(data, num_features, early_stop=False):
     print(f'Finished search!! The best feature subset is {best_set_of_features}, which has an accuracy of {(total_best_accuracy * 100):.3f}%')
 
 def backward_elimination(data, num_features):
+    # Perform the backward elimination feature selection algorithm
      current_feature_set = set(i for i in range(1, num_features + 1)) # entire set of features
      best_feature_set = current_feature_set.copy() # initialization
      total_best_accuracy = 0.0
@@ -129,6 +134,7 @@ def backward_elimination(data, num_features):
      print(f'Finished search!! The best feature subset is {{{", ".join(str(f) for f in best_feature_set)}}}, which has an accuracy of {(total_best_accuracy * 100):.3f}%')
     
 def main():
+    #Main function/Driver Code to execute the feature selection program
     print("Welcome to Suryaa/Bhavya's Feature Selection program.")
     print("Type in the name of the file to test, type default to run on Wisconsin Breast Cancer Dataset : ")
     file_name = input()
@@ -154,11 +160,10 @@ def main():
         with open(file_name, 'r') as file:
             file_data = file.readlines()
             num_features = len(file_data[0].split()) - 1 # exclude 1st column (classes)
-            num_records = len(file_data) # count from 2nd line
+            num_records = len(file_data)
 
     print(f'This dataset has {num_features} features(not including class attribute), with {num_records} instances')
 
-    # normalized_data = normalize(data)
     data = []
 
     if file_name == "data.csv":
@@ -181,7 +186,8 @@ def main():
         sample_size = len(data) // 2 # set sample size to 50%
         random.shuffle(data) # shuffle the data
         data = data[:sample_size] # select the sample data
-
+        
+    # normalized_data = normalize(data)
     accuracy, _ = nearest_neighbors(data, [i for i in range(1, num_features + 1)])
     print(f'Running nearest neighbor with all {num_features} features, using \"leaving-one-out\" evaluation, we get an accuracy of {(accuracy*100):.3f}%')
 
