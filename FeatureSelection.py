@@ -3,13 +3,11 @@ import csv
 import time
 import random
 
-# Find Euclidean Distance between two points
 def euclidean_distance(p1, p2):
     distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(p1, p2)))
     return distance
 
-# Find Manhattan Distance between two points
-# Not used in this program, only for evaluation
+# not used in this program, only for evaluation
 def manhattan_distance(p1, p2):
     distance = sum([abs(a - b) for a, b in zip(p1, p2)])
     return distance
@@ -31,7 +29,7 @@ def nearest_neighbors(data, current_feature_set, best_correct_predictions=0):
         for j in range(len(instances)):
             if i != j:
                 distance = euclidean_distance(test_feature, instances[j])
-                #distance = manhattan_distance(features[j], test_feature)
+                # distance = manhattan_distance(features[j], test_feature)
                 distances.append(distance)
                 labels.append(classes[j])
 
@@ -53,8 +51,8 @@ def forward_search(data, num_features, early_stop=False):
     current_set_of_features = [] # empty set
     best_set_of_features = [] # empty set
     total_best_accuracy = 0.0
-    print(f'Beginning forward search.')
 
+    print(f'Beginning forward search.')
     for i in range(1, num_features + 1):
         feature_to_add_at_this_level = None
         best_accuracy_so_far = 0.0
@@ -64,10 +62,10 @@ def forward_search(data, num_features, early_stop=False):
             if k not in current_set_of_features:
                 accuracy, correct_predictions = nearest_neighbors(data, current_set_of_features + [k], best_correct_predictions)
                 if accuracy == -1:
-                    print(f'Using feature(s) {{{current_set_of_features + [k]}}} accuracy < {best_accuracy_so_far*100}%')
+                    print(f'Using feature(s) {{{", ".join(str(f) for f in current_set_of_features + [k])}}} accuracy < {(best_accuracy_so_far * 100):.3f}%')
                     continue
 
-                print(f'Using feature(s) {{{current_set_of_features + [k]}}} accuracy is {accuracy*100}%')
+                print(f'Using feature(s) {{{", ".join(str(f) for f in current_set_of_features + [k])}}} accuracy is {(accuracy * 100):.3f}%')
                 
                 if accuracy > best_accuracy_so_far:
                     best_accuracy_so_far = accuracy
@@ -75,47 +73,41 @@ def forward_search(data, num_features, early_stop=False):
                     if correct_predictions > best_correct_predictions:
                         best_correct_predictions = correct_predictions
 
-
         current_set_of_features.append(feature_to_add_at_this_level)
 
         if best_accuracy_so_far > total_best_accuracy:
-            print('here')
             total_best_accuracy = best_accuracy_so_far
-            best_set_of_features = current_set_of_features[:]
+            best_set_of_features = current_set_of_features.copy()
             consecutive_decreases = 0
         else:
             print(f'(Warning, Accuracy has decreased! Continuing search in case of local maxima)')
             consecutive_decreases += 1
-        print(f'Feature set {current_set_of_features} was best, accuracy is {best_accuracy_so_far*100}%')
+        print(f'Feature set {current_set_of_features} was best, accuracy is {(best_accuracy_so_far * 100):.3f}%')
 
-        if early_stop and consecutive_decreases >= 3:
-            print(f'Accuracy has decreased for five consecutive steps. Stopping early.')
+        if early_stop and consecutive_decreases >= 2:
+            print(f'Accuracy has decreased for two consecutive steps. Stopping early.')
             break
 
-    print(f'Finished search!! The best feature subset is {best_set_of_features}, which has an accuracy of {total_best_accuracy*100}%')
-
-    return best_set_of_features, total_best_accuracy
+    print(f'Finished search!! The best feature subset is {best_set_of_features}, which has an accuracy of {(total_best_accuracy * 100):.3f}%')
 
 def backward_elimination(data, num_features):
-     current_feature_set = set(i for i in range(1, num_features + 1)) #Entire set of features
-     best_feature_set = current_feature_set.copy() #Initialization
+     current_feature_set = set(i for i in range(1, num_features + 1)) # entire set of features
+     best_feature_set = current_feature_set.copy() # initialization
      total_best_accuracy = 0.0
      
-     print(f'Beginning search using Backward Elimination')
+     print(f'Beginning backward elimination search.')
      for i in range(num_features, 0, -1):
-        print(f'On the {i}th level of the search tree.')
         feature_to_remove_at_this_level = None
         best_accuracy_so_far = 0.0
         best_correct_predictions = 0
 
         for k in current_feature_set:
-            print(f'Considering removing the {k}th feature')
             feature_subset = current_feature_set-{k}
             accuracy, correct_predictions = nearest_neighbors(data, feature_subset, best_correct_predictions)
             if accuracy == -1:
-                    print(f'Using feature(s) {{{", ".join(str(f) for f in feature_subset)}}} accuracy < {best_accuracy_so_far*100}%')
-                    continue
-            print(f'Using feature(s) {{{", ".join(str(f) for f in feature_subset)}}} accuracy is {accuracy*100}%')
+                print(f'Using feature(s) {{{", ".join(str(f) for f in feature_subset)}}} accuracy < {(best_accuracy_so_far*100):.3f}%')
+                continue
+            print(f'Using feature(s) {{{", ".join(str(f) for f in feature_subset)}}} accuracy is {(accuracy*100):.3f}%')
 
             if accuracy > best_accuracy_so_far:
                 best_accuracy_so_far = accuracy
@@ -130,11 +122,11 @@ def backward_elimination(data, num_features):
             best_feature_set = current_feature_set.copy()
             print('(Accuracy has increased, we have escaped a local maxima!)')
         else:
-            print('(No improvement this path)')
-        print(f'Feature set {{{", ".join(str(f) for f in current_feature_set)}}} was best, accuracy is {best_accuracy_so_far * 100}%')
+            print(f'(Warning, Accuracy has decreased! Continuing search in case of local maxima)')
 
-     print(f'Finished search!! The best feature subset is {{{", ".join(str(f) for f in best_feature_set)}}}, which has an accuracy of {total_best_accuracy * 100}%')
-     return best_feature_set, total_best_accuracy
+        print(f'Feature set {{{", ".join(str(f) for f in current_feature_set)}}} was best, accuracy is {(best_accuracy_so_far * 100):.3f}%')
+
+     print(f'Finished search!! The best feature subset is {{{", ".join(str(f) for f in best_feature_set)}}}, which has an accuracy of {(total_best_accuracy * 100):.3f}%')
     
 def main():
     print("Welcome to Suryaa/Bhavya's Feature Selection program.")
@@ -164,8 +156,6 @@ def main():
             num_features = len(file_data[0].split()) - 1 # exclude 1st column (classes)
             num_records = len(file_data) # count from 2nd line
 
-    print(num_records)
-    print(num_features)
     print(f'This dataset has {num_features} features(not including class attribute), with {num_records} instances')
 
     # normalized_data = normalize(data)
@@ -173,7 +163,6 @@ def main():
 
     if file_name == "data.csv":
         for row in csv_data:
-            # classes.append(float(1) if row['diagnosis'] == 'M' else float(2))
             instance = []
             for feature in reader.fieldnames[2:]:
                 value = row[feature]
@@ -181,39 +170,35 @@ def main():
                     print(feature)
                     print(row)
                 instance.append(float(value) if value is not None else None)
-            # instances.append(instance)
             data.append([float(1) if row['diagnosis'] == 'M' else float(2), instance])
     else:
         for line in file_data:
             row = line.strip().split()
             data.append([float(row[0]), [float(i) for i in row[1:]]])
-            # classes.append(float(row[0]))
-            # instances.append([float(i) for i in row[1:]])
-    
-    # data = [classes, instances]
-    if len(data) > 10000:
-        sample_size = len(data) // 2
-        random.shuffle(data)
-        data = data[:sample_size]
-    print(len(data))
+
+    # sampling optimization
+    if len(data) > 2000:
+        sample_size = len(data) // 2 # set sample size to 50%
+        random.shuffle(data) # shuffle the data
+        data = data[:sample_size] # select the sample data
+
     accuracy, _ = nearest_neighbors(data, [i for i in range(1, num_features + 1)])
-    print(f'Running nearest neighbor with all {num_features} features, using \"leaving-one-out\" evaluation, we get an accuracy of {accuracy*100}%')
+    print(f'Running nearest neighbor with all {num_features} features, using \"leaving-one-out\" evaluation, we get an accuracy of {(accuracy*100):.3f}%')
 
     start_time = time.time()
     if algo_number == 1:
         print("Do you want to stop early if there are consecutive decreases in accuracy (OPTIMIZATION)? (y/n)")
         stop_early = input()
         if stop_early == 'y':
-            final_feature_set = forward_search(data, num_features, True)
+            forward_search(data, num_features, True)
         else:
-            final_feature_set = forward_search(data, num_features)
+            forward_search(data, num_features)
         end_time = time.time() - start_time
-        print(f'Finished forward search in {end_time} seconds.')
+        print(f'Finished forward search in {end_time:.2f} seconds.')
     else:
-        final_feature_set = backward_elimination(data, num_features)
+        backward_elimination(data, num_features)
         end_time = time.time() - start_time
-        print(f'Finished backward elimination search in {end_time} seconds.')
-    print(f'Final feature subset: {final_feature_set}')
+        print(f'Finished backward elimination search in {end_time:.2f} seconds.')
 
 #0/1 Normalization
 def normalize(data):
